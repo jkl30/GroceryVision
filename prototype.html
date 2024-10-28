@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Smart Glasses Grocery Prototype</title>
+  <style>
+    body, html {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      display: flex;
+      justify-content: flex-start;
+      align-items: center;
+      font-family: Arial, sans-serif;
+      background-color: transparent;
+    }
+    
+    #webcam-background {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      z-index: -1;
+      transform: scaleX(-1);
+    }
+    
+    .grocery-list {
+      background: rgba(0, 0, 0, 0.7);
+      padding: 20px;
+      border-radius: 10px;
+      backdrop-filter: blur(2px);
+      -webkit-backdrop-filter: blur(2px);
+      color: #00ff00; 
+      text-align: left;
+      max-width: 250px;
+      margin-left: 5%;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      display: none; /* Hidden by default */
+      animation: fadeIn 0.3s ease-in-out;
+    }
+
+    .grocery-list.visible {
+      display: block;
+    }
+
+    .grocery-list h2 {
+      margin-top: 0;
+      border-bottom: 1px solid #00ff00;
+      padding-bottom: 10px;
+    }
+
+    .grocery-item {
+      display: flex;
+      align-items: center;
+      margin: 10px 0;
+    }
+
+    .grocery-item input[type="checkbox"] {
+      margin-right: 10px;
+      accent-color: #00ff00;
+    }
+
+    .grocery-item.checked {
+      text-decoration: line-through;
+      opacity: 0.7;
+    }
+
+    .controls-info {
+      position: fixed;
+      bottom: 20px;
+      left: 20px;
+      color: white;
+      background: rgba(0, 0, 0, 0.7);
+      padding: 10px;
+      border-radius: 5px;
+      font-size: 14px;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+  </style>
+</head>
+<body>
+  <video id="webcam-background" autoplay playsinline muted></video>
+  
+  <div class="grocery-list">
+    <h2>Grocery List</h2>
+    <div class="grocery-item">
+      <input type="checkbox" id="item1">
+      <label for="item1">🥛 Milk</label>
+    </div>
+    <div class="grocery-item">
+      <input type="checkbox" id="item2">
+      <label for="item2">🍞 Bread</label>
+    </div>
+    <div class="grocery-item">
+      <input type="checkbox" id="item3">
+      <label for="item3">🥚 Eggs</label>
+    </div>
+    <div class="grocery-item">
+      <input type="checkbox" id="item4">
+      <label for="item4">🍌 Bananas</label>
+    </div>
+    <div class="grocery-item">
+      <input type="checkbox" id="item5">
+      <label for="item5">🥬 Lettuce</label>
+    </div>
+  </div>
+
+  <div class="controls-info">
+    Press 'G' to toggle grocery list | Press 'Space' to check/uncheck items
+  </div>
+
+  <script>
+    const video = document.getElementById('webcam-background');
+    const groceryList = document.querySelector('.grocery-list');
+    let currentSelectedItem = 0;
+    const groceryItems = document.querySelectorAll('.grocery-item');
+
+    // Initialize webcam
+    navigator.mediaDevices.getUserMedia({ video: true })
+      .then((stream) => {
+        video.srcObject = stream;
+      })
+      .catch((err) => {
+        console.error("Error accessing webcam: ", err);
+        document.body.style.backgroundColor = '#333';
+      });
+
+    // Handle keyboard controls
+    document.addEventListener('keydown', (event) => {
+      // Toggle list with 'g' key
+      if (event.key.toLowerCase() === 'g') {
+        groceryList.classList.toggle('visible');
+      }
+      
+      // Only process other keys if list is visible
+      if (groceryList.classList.contains('visible')) {
+        if (event.key === 'ArrowDown') {
+          // Move selection down
+          groceryItems[currentSelectedItem].style.backgroundColor = 'transparent';
+          currentSelectedItem = (currentSelectedItem + 1) % groceryItems.length;
+          groceryItems[currentSelectedItem].style.backgroundColor = 'rgba(0, 255, 0, 0.3)';
+        } else if (event.key === 'ArrowUp') {
+          // Move selection up
+          groceryItems[currentSelectedItem].style.backgroundColor = 'transparent';
+          currentSelectedItem = (currentSelectedItem - 1 + groceryItems.length) % groceryItems.length;
+          groceryItems[currentSelectedItem].style.backgroundColor = 'rgba(0, 255, 0, 0.3)';
+        } else if (event.key === ' ') {
+          // Toggle checkbox with spacebar
+          const checkbox = groceryItems[currentSelectedItem].querySelector('input[type="checkbox"]');
+          checkbox.checked = !checkbox.checked;
+          groceryItems[currentSelectedItem].classList.toggle('checked');
+        }
+      }
+    });
+
+    // Highlight first item by default when list becomes visible
+    groceryList.addEventListener('transitionend', () => {
+      if (groceryList.classList.contains('visible')) {
+        groceryItems[currentSelectedItem].style.backgroundColor = 'rgba(0, 255, 0, 0.3)';
+      }
+    });
+  </script>
+</body>
+</html>
