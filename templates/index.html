@@ -1,0 +1,101 @@
+<!-- templates/index.html -->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Object Detection & OCR with Text Overlay</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+    <!-- Main video background -->
+    <img id="video-feed" alt="Video feed">
+
+    <!-- Left text block container -->
+    <div class="text-block-container" id="text-block-container">
+        <div class="text-block active" id="text-block-1">
+            <h1>Item X</h1>
+            <p>Name: X<br>Brand: Kirkland<br>Flavor: Chocoalte<br>Price: $10.90</p>
+            <div id="info"></div>
+            <div class="dots">
+                <div class="dot active"></div>
+                <div class="dot"></div>
+                <div class="dot"></div>
+            </div>
+        </div>
+        <div class="text-block" id="text-block-2">
+            <h1>Item X</h1>
+            <p>Here goes additional information</p>
+            <div id="details 1"></div>
+            <div class="dots">
+                <div class="dot"></div>
+                <div class="dot active"></div>
+                <div class="dot"></div>
+            </div>
+        </div>
+        <div class="text-block" id="text-block-3">
+            <h1>Item X</h1>
+            <p>Here goes relevant nutritional information</p>
+            <div id="details 2"></div>
+            <div class="dots">
+                <div class="dot"></div>
+                <div class="dot"></div>
+                <div class="dot active"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Right text block container -->
+    <div class="text-block-container right" id="right-text-block-container">
+        <div class="text-block active" id="right-text-block-1">
+            <h1>Checklist</h1>
+            <ul class="checklist" id="checklist">
+                <li>
+                    <input type="checkbox" id="item1">
+                    <label for="item1">Item 1</label>
+                </li>
+                <li>
+                    <input type="checkbox" id="item2">
+                    <label for="item2">Item 2</label>
+                </li>
+                <li>
+                    <input type="checkbox" id="item3">
+                    <label for="item3">Item 3</label>
+                </li>
+                <li>
+                    <input type="checkbox" id="item4">
+                    <label for="item4">Item 4</label>
+                </li>
+                <li>
+                    <input type="checkbox" id="item5">
+                    <label for="item5">Item 5</label>
+                </li>
+                <li>
+                    <input type="checkbox" id="item6">
+                    <label for="item6">Item 6</label>
+                </li>
+                <li>
+                    <input type="checkbox" id="item7">
+                    <label for="item7">Item 7</label>
+                </li>
+                <li>
+                    <input type="checkbox" id="item8">
+                    <label for="item8">Item 8</label>
+                </li>
+                <li>
+                    <input type="checkbox" id="item9">
+                    <label for="item9">Item 9</label>
+                </li>
+            </ul>
+            <div class="dots">
+                <div class="dot active"></div>
+                <div class="dot"></div>
+                <div class="dot"></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>
