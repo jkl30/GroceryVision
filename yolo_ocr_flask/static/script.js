@@ -1,6 +1,6 @@
 /** static/script.js **/
 
-const LONG_PRESS_DURATION = 1500;
+const LONG_PRESS_DURATION = 500;
 const SWIPE_THRESHOLD = 50;
 const MAX_HISTORY_ITEMS = 9; // 9 items total for 3 pages of 3 items each
 const ITEMS_PER_PAGE = 3;
@@ -28,40 +28,87 @@ class TextBlock {
         this.overlay.id = `overlay-${this.containerId}`; // Add unique ID to overlay
         this.overlay.style.cssText = `
             position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 300px;
+            height: 400px;
             display: none;
-            z-index: 1;
+            z-index: 3;
+            ${this.containerId === 'text-block-container' ? 'left: 0%;' : 'right: 0%;'}
         `;
-        
-        // Insert overlay next to its corresponding container
-        this.container.parentNode.insertBefore(this.overlay, this.container.nextSibling);
+    
+        document.body.appendChild(this.overlay);
   
-        // Bind events to container and its specific overlay
-        [this.container, this.overlay].forEach(element => {
-            element.addEventListener('touchstart', this.handleTouchStart.bind(this));
-            element.addEventListener('touchend', this.handleTouchEnd.bind(this));
-            element.addEventListener('mousedown', this.handleMouseDown.bind(this));
-            element.addEventListener('mouseup', this.handleMouseUp.bind(this));
-        });
+        const handleEvent = (eventName, handler) => {
+            const boundHandler = (e) => {
+                const target = e.target;
+                const isThisContainer = target.closest(`#${this.containerId}`);
+                const isThisOverlay = target.closest(`#overlay-${this.containerId}`);
+                
+                if (isThisContainer || isThisOverlay) {
+                    e.stopPropagation();
+                    handler.call(this, e);
+                }
+            };
+
+            this.container.addEventListener(eventName, boundHandler);
+            this.overlay.addEventListener(eventName, boundHandler);
+        };
+
+        handleEvent('touchstart', this.handleTouchStart);
+        handleEvent('touchend', this.handleTouchEnd);
+        handleEvent('mousedown', this.handleMouseDown);
+        handleEvent('mouseup', this.handleMouseUp);
     }
-  
-    showTextBlock(index) {
-        this.blocks.forEach((block, i) => {
-            block.classList.toggle('active', i === index);
-            block.classList.toggle('inactive', i !== index);
-        });
-        this.currentIndex = index;
-    }
-  
+
     toggleVisibility() {
         this.isVisible = !this.isVisible;
-        this.container.classList.toggle('hidden', !this.isVisible);
-        this.overlay.style.display = this.isVisible ? 'none' : 'block';
+    
+        if (this.isVisible) {
+            this.container.classList.remove('hidden');
+            this.overlay.style.display = 'none';
+            this.container.style.zIndex = '2';
+            this.overlay.classList.remove('touch-indicator');
+        } else {
+            this.container.classList.add('hidden');
+            this.overlay.style.display = 'block';
+            this.container.style.zIndex = '1';
+            this.overlay.classList.add('touch-indicator');
+        }
+    }
+
+    handleTouchStart(event) {
+        this.startY = event.touches[0].clientY;
+        this.startTime = Date.now();
+        this.longPressTimeout = setTimeout(() => {
+            this.toggleVisibility();
+        }, LONG_PRESS_DURATION);
     }
   
+    handleTouchEnd(event) {
+        clearTimeout(this.longPressTimeout);
+        if (Date.now() - this.startTime < LONG_PRESS_DURATION) {
+            const deltaY = event.changedTouches[0].clientY - this.startY;
+            this.handleSwipe(deltaY);
+        }
+    }
+  
+    handleMouseDown(event) {
+        this.startY = event.clientY;
+        this.startTime = Date.now();
+        this.longPressTimeout = setTimeout(() => {
+            this.toggleVisibility();
+        }, LONG_PRESS_DURATION);
+    }
+  
+    handleMouseUp(event) {
+        clearTimeout(this.longPressTimeout);
+        if (Date.now() - this.startTime < LONG_PRESS_DURATION) {
+            const deltaY = event.clientY - this.startY;
+            this.handleSwipe(deltaY);
+        }
+    }
+
     handleSwipe(deltaY) {
         if (Math.abs(deltaY) > SWIPE_THRESHOLD) {
             if (deltaY > 0) {
@@ -72,49 +119,13 @@ class TextBlock {
             this.showTextBlock(this.currentIndex);
         }
     }
-  
-    handleTouchStart(event) {
-        // Only process touch events for this specific container or its overlay
-        if (event.target.closest(`#${this.containerId}`) || event.target.closest(`#overlay-${this.containerId}`)) {
-            this.startY = event.touches[0].clientY;
-            this.startTime = Date.now();
-            this.longPressTimeout = setTimeout(() => {
-                this.toggleVisibility();
-            }, LONG_PRESS_DURATION);
-        }
-    }
-  
-    handleTouchEnd(event) {
-        // Only process touch events for this specific container or its overlay
-        if (event.target.closest(`#${this.containerId}`) || event.target.closest(`#overlay-${this.containerId}`)) {
-            clearTimeout(this.longPressTimeout);
-            if (Date.now() - this.startTime < LONG_PRESS_DURATION) {
-                const deltaY = event.changedTouches[0].clientY - this.startY;
-                this.handleSwipe(deltaY);
-            }
-        }
-    }
-  
-    handleMouseDown(event) {
-        // Only process mouse events for this specific container or its overlay
-        if (event.target.closest(`#${this.containerId}`) || event.target.closest(`#overlay-${this.containerId}`)) {
-            this.startY = event.clientY;
-            this.startTime = Date.now();
-            this.longPressTimeout = setTimeout(() => {
-                this.toggleVisibility();
-            }, LONG_PRESS_DURATION);
-        }
-    }
-  
-    handleMouseUp(event) {
-        // Only process mouse events for this specific container or its overlay
-        if (event.target.closest(`#${this.containerId}`) || event.target.closest(`#overlay-${this.containerId}`)) {
-            clearTimeout(this.longPressTimeout);
-            if (Date.now() - this.startTime < LONG_PRESS_DURATION) {
-                const deltaY = event.clientY - this.startY;
-                this.handleSwipe(deltaY);
-            }
-        }
+
+    showTextBlock(index) {
+        this.blocks.forEach((block, i) => {
+            block.classList.toggle('active', i === index);
+            block.classList.toggle('inactive', i !== index);
+        });
+        this.currentIndex = index;
     }
   }
 
@@ -402,4 +413,19 @@ document.addEventListener('DOMContentLoaded', () => {
             icon.classList.toggle('active', icon.id === `icon-${activeType}`);
         });
     }
+    // Tutorial handling
+    const tutorialOverlay = document.getElementById('tutorial-overlay');
+    const tutorialDismiss = document.getElementById('tutorial-dismiss');
+
+    // Check if tutorial has been shown before
+    const hasSeenTutorial = localStorage.getItem('hasSeenTutorial');
+
+    if (!hasSeenTutorial) {
+        tutorialOverlay.classList.remove('hidden');
+    }
+
+    tutorialDismiss.addEventListener('click', () => {
+        tutorialOverlay.classList.add('hidden');
+        localStorage.setItem('hasSeenTutorial', 'true');
+    });
 });

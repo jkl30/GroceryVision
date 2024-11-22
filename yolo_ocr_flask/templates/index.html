@@ -104,5 +104,32 @@
         <img src="{{ url_for('static', filename='curry-icon.png') }}" alt="Curry Icon" id="icon-curry" class="icon">
         <img src="{{ url_for('static', filename='honey-icon.png') }}" alt="Honey Icon" id="icon-honey" class="icon">
     </div>
+    <div class="control-instructions">
+        <div class="instruction-item">
+            <span class="instruction-icon">↕️</span>
+            <span class="instruction-text">Swipe</span>
+        </div>
+        <div class="instruction-separator"></div>
+        <div class="instruction-item">
+            <span class="instruction-icon">👆</span>
+            <span class="instruction-text">Hold</span>
+        </div>
+    </div>
+    <div id="tutorial-overlay" class="tutorial-overlay">
+        <div class="tutorial-content">
+            <h2>Welcome to Grocery Vision</h2>
+            <div class="tutorial-steps">
+                <div class="tutorial-step">
+                    <span class="tutorial-icon">↕️</span>
+                    <p>Swipe up/down to navigate information panels</p>
+                </div>
+                <div class="tutorial-step">
+                    <span class="tutorial-icon">👆</span>
+                    <p>Long press to hide/show side panels</p>
+                </div>
+            </div>
+            <button id="tutorial-dismiss" class="tutorial-dismiss">Got it</button>
+        </div>
+    </div>
 </body>
 </html>
