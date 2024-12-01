@@ -293,10 +293,13 @@ class DetectionInterface {
             // Update video feed
             this.videoFeed.src = `data:image/png;base64,${data.frame}`;
             
-            // Handle closest object detection
+            // Handle closest object detection and update content
             if (data.closest_object && data.closest_object.name !== this.currentObject) {
                 this.currentObject = data.closest_object.name;
-                this.updateContent(this.currentObject);
+                // Only update if the detected object matches our content
+                if (this.contentData[this.currentObject]) {
+                    this.updateContent(this.currentObject);
+                }
             }
             
             // Update detections
