@@ -152,11 +152,18 @@ class FrameAnnotator:
     A class for annotating video frames with object detection and OCR results.
     """
     
-    def __init__(self):
-        """Initialize the frame annotator."""
+    def __init__(self, start_time=None, frame_count=0):
+        """
+        Initialize the frame annotator.
+        
+        Args:
+            start_time (float, optional): Starting timestamp. Defaults to current time if None.
+            frame_count (int, optional): Initial frame count. Defaults to 0.
+        """
         self.fps_counter = 0
-        self.last_fps_time = time.time()
+        self.last_fps_time = start_time if start_time is not None else time.time()
         self.current_fps = 0
+        self.frame_count = frame_count
 
     def _get_tracked_object(self, label: str, ocr_words: Optional[List[str]] = None) -> Optional[Dict]:
         """
