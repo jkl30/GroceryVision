@@ -17,7 +17,9 @@ logger.setLevel(logging.INFO)  # Ensure the logger respects the configured level
 class AnnotationMode(Enum):
     """Defines the available annotation visualization modes."""
     DOT_ONLY = "dot_only"
-    DOT_AND_TEXT = "dot_and_text"
+    DOT_AND_TEXT = "dot_and_text" 
+    BOX_ONLY = "box_only"
+    BOX_AND_TEXT = "box_and_text"
 
 @dataclass
 class TrackedObject:
@@ -152,18 +154,11 @@ class FrameAnnotator:
     A class for annotating video frames with object detection and OCR results.
     """
     
-    def __init__(self, start_time=None, frame_count=0):
-        """
-        Initialize the frame annotator.
-        
-        Args:
-            start_time (float, optional): Starting timestamp. Defaults to current time if None.
-            frame_count (int, optional): Initial frame count. Defaults to 0.
-        """
+    def __init__(self):
+        """Initialize the frame annotator."""
         self.fps_counter = 0
-        self.last_fps_time = start_time if start_time is not None else time.time()
+        self.last_fps_time = time.time()
         self.current_fps = 0
-        self.frame_count = frame_count
 
     def _get_tracked_object(self, label: str, ocr_words: Optional[List[str]] = None) -> Optional[Dict]:
         """
@@ -241,6 +236,7 @@ class FrameAnnotator:
                         center: Tuple[float, float],
                         probability: float,
                         label: str,
+                        bbox: Tuple[float, float, float, float],
                         ocr_matches: Optional[List[Dict]] = None,
                         annotation_mode: AnnotationMode = AnnotationMode.DOT_AND_TEXT) -> None:
         """
@@ -251,27 +247,36 @@ class FrameAnnotator:
             center (Tuple[float, float]): Center point of the detection.
             probability (float): Detection probability.
             label (str): Detection label.
+            bbox (Tuple[float, float, float, float]): Bounding box coordinates (x1, y1, x2, y2).
             ocr_matches (Optional[List[Dict]]): Matching OCR results.
-            annotation_mode (AnnotationMode): The annotation mode to use.
+            annotation_mode (AnnotationMode): The annotation visualization mode.
         """
         center_x, center_y = int(center[0]), int(center[1])
+        x1, y1, x2, y2 = [int(coord) for coord in bbox]
 
-        # Always draw the dot
-        cv2.circle(frame, (center_x, center_y), 5, (255, 255, 255), -1)
+        if annotation_mode in [AnnotationMode.DOT_ONLY, AnnotationMode.DOT_AND_TEXT]:
+            # Draw the dot
+            cv2.circle(frame, (center_x, center_y), 5, (255, 255, 255), -1)
 
-        # Add text if in DOT_AND_TEXT mode
-        if annotation_mode == AnnotationMode.DOT_AND_TEXT:
+        if annotation_mode in [AnnotationMode.BOX_ONLY, AnnotationMode.BOX_AND_TEXT]:
+            # Draw bounding box
+            cv2.rectangle(frame, (x1, y1), (x2, y2), (255, 255, 255), 2)
+
+        if annotation_mode in [AnnotationMode.DOT_AND_TEXT, AnnotationMode.BOX_AND_TEXT]:
             # Draw YOLO detection text
             yolo_text = f"[{probability:.2f}] {label}"
-            cv2.putText(frame, yolo_text, (center_x + 10, center_y),
-                    cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 1)
+            text_y = y1 - 10 if annotation_mode == AnnotationMode.BOX_AND_TEXT else center_y
+            cv2.putText(frame, yolo_text, 
+                        (x1, text_y), 
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 1)
 
             # Draw OCR matches if available
             if ocr_matches:
                 for idx, match in enumerate(ocr_matches):
                     ocr_text = f"[{match['probability']:.2f}] {match['word']}"
+                    text_y = y1 - 25 - (15 * idx) if annotation_mode == AnnotationMode.BOX_AND_TEXT else center_y + 15 + (15 * idx)
                     cv2.putText(frame, ocr_text,
-                            (center_x + 10, center_y + 15 + 15 * idx),
+                            (x1, text_y),
                             cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 1)
 
     def annotate_frame(self,
@@ -338,7 +343,7 @@ class FrameAnnotator:
             # Draw annotations for this detection
             self._draw_annotations(
                 annotated, center, probability, label,
-                ocr_matches, annotation_mode
+                yolo_bbox, ocr_matches, annotation_mode
             )
 
         # Update and draw FPS

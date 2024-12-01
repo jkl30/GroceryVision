@@ -187,9 +187,8 @@ def generate_frames():
                     frame=frame,
                     yolo_results=latest_yolo_results,
                     ocr_results=latest_ocr_results,
-                    filter_tracked=True,
-
-                    annotation_mode=AnnotationMode.DOT_ONLY
+                    filter_tracked=False,
+                    annotation_mode=AnnotationMode.BOX_AND_TEXT
                 )
 
                 # Convert to base64
