@@ -108,8 +108,8 @@ def generate_frames():
                 frame=frame,
                 yolo_results=yolo_results,
                 ocr_results=ocr_results,
-                filter_tracked=True,  # Set to True to only show tracked objects
-                annotation_mode=AnnotationMode.DOT_AND_TEXT
+                filter_tracked=False,  # Set to True to only show tracked objects
+                annotation_mode=AnnotationMode.DOT_ONLY
             )
             
             # Convert to base64
@@ -160,6 +160,6 @@ if __name__ == '__main__':
         format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
     )
     # Disable Flask's debugger reloader in production
-    app.run(debug=False, host='192.168.0.30', threaded=True)
+    #app.run(debug=False, host='192.168.0.30', threaded=True)
     #app.run(debug=False, host='10.122.152.129', threaded=True)
-    #app.run(debug=False, threaded=True)
+    app.run(debug=False, threaded=True)

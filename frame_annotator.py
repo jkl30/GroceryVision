@@ -12,6 +12,7 @@ from dataclasses import dataclass, asdict
 logger = logging.getLogger(__name__)
 # Configure logging
 configure_logging()
+logger.setLevel(logging.INFO)  # Ensure the logger respects the configured level
 
 class AnnotationMode(Enum):
     """Defines the available annotation visualization modes."""
@@ -60,12 +61,12 @@ TRACKED_OBJECTS = {
     'honey': TrackedObject(
         id=2,
         name='honey',
-        aliases={'honey', 'organic honey', 'miel'}
+        aliases={'honey', 'organic', 'miel', 'cremeux','brut', 'creamed', 'raw'}
     ),
     'curry': TrackedObject(
         id=3,
         name='curry',
-        aliases={'curry', 'curries', 'curry sauce', 'curry powder'}
+        aliases={'curry', 'powder', 'curry sauce', 'curry powder', 'poudre', 'cari','poudre de cari','village'}
     )
 }
 

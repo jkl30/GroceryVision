@@ -9,6 +9,7 @@ logger = logging.getLogger(__name__)
 
 # Configure logging
 configure_logging()  # Call the logging configuration function
+logger.setLevel(logging.INFO)  # Ensure the logger respects the configured level
 
 class OCR:
     def __init__(self):
@@ -24,7 +25,7 @@ class OCR:
         """
         try:
             logger.info("Initializing PaddleOCR reader...")
-            self.reader = PaddleOCR(use_angle_cls=True, lang='en')
+            self.reader = PaddleOCR(use_angle_cls=True, lang='en',show_log=False)
         except Exception as e:
             logger.error(f"Failed to initialize PaddleOCR reader: {str(e)}")
             raise

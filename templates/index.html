@@ -15,8 +15,8 @@
     <!-- Left text block container -->
     <div class="text-block-container" id="text-block-container">
         <div class="text-block active" id="text-block-1">
-            <h1>Item X</h1>
-            <p>Name: X<br>Brand: Kirkland<br>Flavor: Chocoalte<br>Price: $10.90</p>
+            <h1>Greek Yogurt</h1>
+            <p>Name: Greek Yogurt<br>Brand: Kirkland<br>Flavor: Greek<br>Price: $13.69</p>
             <div id="info"></div>
             <div class="dots">
                 <div class="dot active"></div>
@@ -25,7 +25,7 @@
             </div>
         </div>
         <div class="text-block" id="text-block-2">
-            <h1>Item X</h1>
+            <h1>Greek Yogurt</h1>
             <p>Here goes additional information</p>
             <div id="details 1"></div>
             <div class="dots">
@@ -35,7 +35,7 @@
             </div>
         </div>
         <div class="text-block" id="text-block-3">
-            <h1>Item X</h1>
+            <h1>Greek Yogurt</h1>
             <p>Here goes relevant nutritional information</p>
             <div id="details 2"></div>
             <div class="dots">
@@ -53,15 +53,15 @@
             <ul class="checklist" id="checklist">
                 <li>
                     <input type="checkbox" id="item1">
-                    <label for="item1">Item 1</label>
+                    <label for="item1">Curry Powder</label>
                 </li>
                 <li>
                     <input type="checkbox" id="item2">
-                    <label for="item2">Item 2</label>
+                    <label for="item2">Honey</label>
                 </li>
                 <li>
                     <input type="checkbox" id="item3">
-                    <label for="item3">Item 3</label>
+                    <label for="item3">Yogurt</label>
                 </li>
                 <li>
                     <input type="checkbox" id="item4">
@@ -97,5 +97,39 @@
     </div>
 
     <script src="{{ url_for('static', filename='script.js') }}"></script>
+
+    <!-- Icon navigation bar for toggling between yogurt, curry, and honey -->
+    <div id="icon-nav">
+        <img src="{{ url_for('static', filename='yogurt-icon.png') }}" alt="Yogurt Icon" id="icon-yogurt" class="icon active">
+        <img src="{{ url_for('static', filename='curry-icon.png') }}" alt="Curry Icon" id="icon-curry" class="icon">
+        <img src="{{ url_for('static', filename='honey-icon.png') }}" alt="Honey Icon" id="icon-honey" class="icon">
+    </div>
+    <div class="control-instructions">
+        <div class="instruction-item">
+            <span class="instruction-icon">↕️</span>
+            <span class="instruction-text">Swipe</span>
+        </div>
+        <div class="instruction-separator"></div>
+        <div class="instruction-item">
+            <span class="instruction-icon">👆</span>
+            <span class="instruction-text">Hold</span>
+        </div>
+    </div>
+    <div id="tutorial-overlay" class="tutorial-overlay">
+        <div class="tutorial-content">
+            <h2>Welcome to Grocery Vision</h2>
+            <div class="tutorial-steps">
+                <div class="tutorial-step">
+                    <span class="tutorial-icon">↕️</span>
+                    <p>Swipe up/down to navigate information panels</p>
+                </div>
+                <div class="tutorial-step">
+                    <span class="tutorial-icon">👆</span>
+                    <p>Long press to hide/show side panels</p>
+                </div>
+            </div>
+            <button id="tutorial-dismiss" class="tutorial-dismiss">Got it</button>
+        </div>
+    </div>
 </body>
 </html>
