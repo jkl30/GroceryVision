@@ -108,7 +108,7 @@ def generate_frames():
                 frame=frame,
                 yolo_results=yolo_results,
                 ocr_results=ocr_results,
-                filter_tracked=False,  # Set to True to only show tracked objects
+                filter_tracked=True,  # Set to True to only show tracked objects
                 annotation_mode=AnnotationMode.DOT_ONLY
             )
             
@@ -121,11 +121,21 @@ def generate_frames():
             response_data = {
                 'frame': frame_base64,
                 'timestamp': time.time(),
-                'closest_tracked_object': closest_object  # Include the closest tracked object in response
+                'closest_object': closest_object,  # Match the key name expected by frontend
+                'detections': [  # Add detections array expected by frontend
+                    {
+                        'class_name': label,
+                        'confidence': float(prob)
+                    }
+                    for label, prob in zip(
+                        yolo_results.get('labels', []),
+                        yolo_results.get('probabilities', [])
+                    )
+                ] if yolo_results else [],
+                'ocr_text': ocr_results.get('text', '') if ocr_results else ''  # Add OCR text
             }
 
             response = json.dumps(response_data)
-            print('closest', closest_object)
             yield f"data: {response}\n\n"
 
             # Small delay to prevent overwhelming the system
