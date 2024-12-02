@@ -159,6 +159,9 @@ class FrameAnnotator:
         self.fps_counter = 0
         self.last_fps_time = time.time()
         self.current_fps = 0
+        self.last_tracked_object = None
+        self.object_missing_frames = 0
+        self.max_missing_frames = 30  # Object persists for ~1 second at 30fps
 
     def _get_tracked_object(self, label: str, ocr_words: Optional[List[str]] = None) -> Optional[Dict]:
         """
@@ -228,8 +231,18 @@ class FrameAnnotator:
             if distance < min_distance:
                 min_distance = distance
                 closest_object = tracked_obj
-                
-        return closest_object
+
+        if closest_object:
+            self.last_tracked_object = closest_object
+            self.object_missing_frames = 0
+            return closest_object
+        
+        # No object found this frame
+        self.object_missing_frames += 1
+        if self.object_missing_frames > self.max_missing_frames:
+            self.last_tracked_object = None
+            
+        return self.last_tracked_object
 
     def _draw_annotations(self,
                         frame: np.ndarray,
