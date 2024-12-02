@@ -248,6 +248,14 @@ class DetectionInterface {
             }
         };
         
+        // Add default content
+        this.contentData.default = {
+            title: "Looking for objects...",
+            info1: "Point your camera at some items to get started",
+            info2: "Point your camera at some items to get started", 
+            info3: "Point your camera at some items to get started"
+        };
+        
         this.setupEventSource();
         this.setupIconListeners();
     }
@@ -263,7 +271,7 @@ class DetectionInterface {
     }
 
     updateContent(objectType) {
-        const content = this.contentData[objectType];
+        const content = objectType === 'None' ? this.contentData.default : this.contentData[objectType];
         if (!content) return;
 
         const textBlocks = document.querySelectorAll('.text-block');
@@ -294,9 +302,16 @@ class DetectionInterface {
             this.videoFeed.src = `data:image/png;base64,${data.frame}`;
             
             // Handle closest object detection
-            if (data.closest_object && data.closest_object.name !== this.currentObject) {
-                this.currentObject = data.closest_object.name;
-                this.updateContent(this.currentObject);
+            if (data.closest_object) {
+                const objectName = data.closest_object.name;
+                if (objectName !== this.currentObject) {
+                    this.currentObject = objectName;
+                    this.updateContent(objectName === 'None' ? 'default' : objectName);
+                }
+            } else {
+                // No closest object, show default
+                this.currentObject = null;
+                this.updateContent('default');
             }
             
             // Update detections

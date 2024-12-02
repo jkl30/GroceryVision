@@ -149,16 +149,6 @@ def match_ocr_to_yolo(yolo_bboxes: List[Tuple[float, float, float, float]],
     
     return matched_results
 
-@dataclass
-class Detection:
-    """Represents a persisted detection with timestamp."""
-    center: Tuple[float, float]
-    probability: float
-    label: str
-    bbox: Tuple[float, float, float, float]
-    ocr_matches: Optional[List[Dict]]
-    timestamp: float
-
 class FrameAnnotator:
     """
     A class for annotating video frames with object detection and OCR results.
@@ -169,10 +159,6 @@ class FrameAnnotator:
         self.fps_counter = 0
         self.last_fps_time = time.time()
         self.current_fps = 0
-        self.last_detection = None  # Store the last known detection
-        self.persisted_detections = {}  # Dict[str, Detection]
-        self.persistence_time = 3.0  # Keep detections for 3 seconds
-        self.tracked_object_instances = {}  # Dict[int, str] to track object instances by ID
 
     def _get_tracked_object(self, label: str, ocr_words: Optional[List[str]] = None) -> Optional[Dict]:
         """
@@ -199,13 +185,6 @@ class FrameAnnotator:
                         return tracked_obj.to_dict()
                         
         return None
-
-    def _get_object_key(self, label: str, ocr_words: Optional[List[str]] = None) -> str:
-        """Generate a unique key for an object based on its tracked object ID."""
-        tracked_obj = self._get_tracked_object(label, ocr_words)
-        if tracked_obj:
-            return f"tracked_{tracked_obj['id']}"
-        return label
 
     def _update_fps(self) -> None:
         """Update the FPS counter."""
@@ -300,16 +279,6 @@ class FrameAnnotator:
                             (x1, text_y),
                             cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 1)
 
-    def _cleanup_old_detections(self) -> None:
-        """Remove detections older than persistence_time."""
-        current_time = time.time()
-        expired = [
-            label for label, detection in self.persisted_detections.items()
-            if current_time - detection.timestamp > self.persistence_time
-        ]
-        for label in expired:
-            del self.persisted_detections[label]
-
     def annotate_frame(self,
                       frame: np.ndarray,
                       yolo_results: Optional[Dict],
@@ -339,8 +308,6 @@ class FrameAnnotator:
         detections_with_ocr = []
 
         # Process YOLO detections with corresponding OCR results
-        current_time = time.time()
-        
         for i, (center, probability, label, yolo_bbox) in enumerate(
             zip(
                 yolo_results.get('centers', []),
@@ -373,45 +340,11 @@ class FrameAnnotator:
             if filter_tracked and tracked_obj is None:
                 continue
 
-            # Generate unique key for this object
-            object_key = self._get_object_key(label, ocr_words)
-            
-            # Update or add to persisted detections - only keep latest instance per tracked object
-            self.persisted_detections[object_key] = Detection(
-                center=center,
-                probability=probability,
-                label=label,
-                bbox=yolo_bbox,
-                ocr_matches=ocr_matches,
-                timestamp=current_time
-            )
-
-        # Clean up old detections
-        self._cleanup_old_detections()
-
-        # Draw all persisting detections
-        for detection in self.persisted_detections.values():
-            self._draw_annotations(
-                annotated,
-                detection.center,
-                detection.probability,
-                detection.label,
-                detection.bbox,
-                detection.ocr_matches,
-                annotation_mode
-            )
-
-        # If no detections, use the last known detection
-        if not detections_with_ocr and self.last_detection:
-            center, probability, label, yolo_bbox, ocr_matches = self.last_detection
+            # Draw annotations for this detection
             self._draw_annotations(
                 annotated, center, probability, label,
                 yolo_bbox, ocr_matches, annotation_mode
             )
-        else:
-            # Update the last known detection
-            if detections_with_ocr:
-                self.last_detection = (center, probability, label, yolo_bbox, ocr_matches)
 
         # Update and draw FPS
         self._update_fps()
