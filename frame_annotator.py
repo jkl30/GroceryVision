@@ -161,7 +161,29 @@ class FrameAnnotator:
         self.current_fps = 0
         self.last_tracked_object = None
         self.object_missing_frames = 0
-        self.max_missing_frames = 30  # Object persists for ~1 second at 30fps
+        self.max_missing_frames = 100  # Object persists for ~1 second at 30fps
+        self.detection_history = []
+        self.history_size = 15  # Keep track of last 5 frames
+        self.last_positions = {}  # {object_id: (x, y)}
+        self.alpha = 0.05  # Smoothing factor (0-1), lower = more smoothing
+        
+
+    def _smooth_position(self, obj_id: int, new_pos: Tuple[float, float]) -> Tuple[float, float]:
+        """Apply exponential moving average to position"""
+        if obj_id not in self.last_positions:
+            self.last_positions[obj_id] = new_pos
+            return new_pos
+            
+        old_x, old_y = self.last_positions[obj_id]
+        new_x, new_y = new_pos
+        
+        # Calculate smoothed position
+        smooth_x = old_x + self.alpha * (new_x - old_x)
+        smooth_y = old_y + self.alpha * (new_y - old_y)
+        
+        # Update stored position
+        self.last_positions[obj_id] = (smooth_x, smooth_y)
+        return (smooth_x, smooth_y)
 
     def _get_tracked_object(self, label: str, ocr_words: Optional[List[str]] = None) -> Optional[Dict]:
         """
@@ -219,6 +241,60 @@ class FrameAnnotator:
         frame_height, frame_width = frame.shape[:2]
         frame_center = (frame_width / 2, frame_height / 2)
         
+        # Add current frame detections to history
+        self.detection_history.append(detections)
+        if len(self.detection_history) > self.history_size:
+            self.detection_history.pop(0)
+            
+        # Count occurrences of each tracked object in history
+        object_counts = {}
+        
+        for frame_detections in self.detection_history:
+            for center, label, ocr_words in frame_detections:
+                tracked_obj = self._get_tracked_object(label, ocr_words)
+                if tracked_obj:
+                    obj_id = tracked_obj['id']
+                    if obj_id not in object_counts:
+                        object_counts[obj_id] = {
+                            'count': 0,
+                            'object': tracked_obj,
+                            'last_center': center
+                        }
+                    object_counts[obj_id]['count'] += 1
+                    object_counts[obj_id]['last_center'] = center
+
+        # Find most consistent object (present in most frames)
+        max_count = 0
+        most_consistent = None
+        
+        for obj_data in object_counts.values():
+            if obj_data['count'] > max_count:
+                max_count = obj_data['count']
+                most_consistent = obj_data['object']
+            elif obj_data['count'] == max_count and most_consistent:
+                # If equal counts, prefer the one closer to center
+                current_distance = calculate_distance_to_center(obj_data['last_center'], frame_center)
+                existing_distance = calculate_distance_to_center(object_counts[most_consistent['id']]['last_center'], frame_center)
+                if current_distance < existing_distance:
+                    most_consistent = obj_data['object']
+
+        if most_consistent:
+            self.last_tracked_object = most_consistent
+            self.object_missing_frames = 0
+            return most_consistent
+            
+        # No consistent object found
+        self.object_missing_frames += 1
+        if self.object_missing_frames > self.max_missing_frames:
+            self.last_tracked_object = None
+            
+        return self.last_tracked_object
+
+    def _find_closest_tracked_object(self, frame: np.ndarray, detections):
+        if not detections:
+            return None
+
+        frame_center = (frame.shape[1] / 2, frame.shape[0] / 2)
         min_distance = float('inf')
         closest_object = None
         
@@ -227,22 +303,15 @@ class FrameAnnotator:
             if tracked_obj is None:
                 continue
                 
-            distance = calculate_distance_to_center(center, frame_center)
+            # Smooth the position
+            smooth_center = self._smooth_position(tracked_obj['id'], center)
+            distance = calculate_distance_to_center(smooth_center, frame_center)
+            
             if distance < min_distance:
                 min_distance = distance
                 closest_object = tracked_obj
-
-        if closest_object:
-            self.last_tracked_object = closest_object
-            self.object_missing_frames = 0
-            return closest_object
         
-        # No object found this frame
-        self.object_missing_frames += 1
-        if self.object_missing_frames > self.max_missing_frames:
-            self.last_tracked_object = None
-            
-        return self.last_tracked_object
+        return closest_object
 
     def _draw_annotations(self,
                         frame: np.ndarray,

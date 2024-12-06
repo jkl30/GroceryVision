@@ -99,7 +99,7 @@ def object_detection_process(frame_queue, yolo_results_queue, stop_event):
     """
     Process frames for object detection in a separate process.
     """
-    object_detector = ObjectDetection('yolo11n.pt')
+    object_detector = ObjectDetection('yolo11x.pt')
     while not stop_event.is_set():
         try:
             if frame_queue.empty():
@@ -188,7 +188,7 @@ def generate_frames():
                     yolo_results=latest_yolo_results,
                     ocr_results=latest_ocr_results,
                     filter_tracked=True,
-                    annotation_mode=AnnotationMode.DOT_AND_TEXT
+                    annotation_mode=AnnotationMode.DOT_ONLY
                 )
 
                 # Convert to base64
